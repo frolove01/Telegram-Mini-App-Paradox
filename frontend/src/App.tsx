@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Clock3,
   Globe2,
+  LockKeyhole,
   Repeat2,
   RotateCcw,
   Search,
@@ -24,6 +25,7 @@ import type { AppLanguage, MarketType } from "./types";
 
 const languageOptions: AppLanguage[] = ["ru", "en", "es", "pt", "tr", "ar"];
 const languageOptionValues = new Set<string>(languageOptions);
+const otcMarketEnabled = false;
 const forexPairs = [
   "GBP/JPY", "EUR/JPY", "AUD/CAD", "AUD/CHF", "AUD/JPY", "AUD/USD", "CAD/CHF", "CHF/JPY",
   "EUR/AUD", "EUR/CAD", "EUR/CHF", "EUR/USD", "GBP/AUD", "GBP/CAD", "GBP/CHF", "USD/CAD",
@@ -80,7 +82,7 @@ function isForexClosedByLocalTime(date = new Date()) {
 }
 
 function readLocalMarket(): MarketType {
-  return localStorage.getItem(localStorageKeys.market) === "OTC" ? "OTC" : "FOREX";
+  return normalizeMarket(localStorage.getItem(localStorageKeys.market));
 }
 
 function readLocalLanguage(): AppLanguage {
@@ -101,7 +103,7 @@ function normalizeLanguage(value: unknown): AppLanguage {
 }
 
 function normalizeMarket(value: unknown): MarketType {
-  return value === "OTC" ? "OTC" : "FOREX";
+  return otcMarketEnabled && value === "OTC" ? "OTC" : "FOREX";
 }
 
 function secureRandBelow(maxExclusive: number) {
@@ -349,6 +351,8 @@ export function App() {
   }
 
   function handleMarketChange(nextMarket: MarketType) {
+    if (nextMarket === "OTC" && !otcMarketEnabled) return;
+
     setMarket(nextMarket);
     setTradingPair("");
     setPairSearch("");
@@ -533,11 +537,12 @@ export function App() {
                     <span>{t("intro.forex")}</span>
                   </button>
                   <button
-                    className={market === "OTC" ? "option-row active" : "option-row"}
+                    className={`option-row${otcMarketEnabled ? "" : " disabled"}${market === "OTC" ? " active" : ""}`}
                     type="button"
+                    disabled={!otcMarketEnabled}
                     onClick={() => handleMarketChange("OTC")}
                   >
-                    <Zap size={17} />
+                    {otcMarketEnabled ? <Zap size={17} /> : <LockKeyhole size={17} aria-hidden="true" />}
                     <span>{t("intro.otc")}</span>
                   </button>
                 </div>
@@ -848,11 +853,12 @@ export function App() {
             </button>
 
             <button
-              className={market === "OTC" ? "market-choice active otc" : "market-choice otc"}
+              className={`market-choice ${otcMarketEnabled ? "otc" : "disabled"}${market === "OTC" ? " active" : ""}`}
               type="button"
+              disabled={!otcMarketEnabled}
               onClick={() => handleMarketChange("OTC")}
             >
-              <Zap size={21} />
+              {otcMarketEnabled ? <Zap size={21} /> : <LockKeyhole size={21} aria-hidden="true" />}
               <span>{t("intro.otc")}</span>
             </button>
           </div>

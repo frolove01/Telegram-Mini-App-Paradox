@@ -6,10 +6,11 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any
+from hmac import compare_digest
+from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -1556,7 +1557,22 @@ def handle_topup_check_callback(db: Session, user: dict[str, Any], chat_id: int,
     return funnel_texts(language)["callback_ok"]
 
 
-@router.post("/webhook", summary="Telegram bot webhook")
+def verify_telegram_webhook_secret(
+    secret_header: Annotated[str | None, Header(alias="X-Telegram-Bot-Api-Secret-Token")] = None,
+) -> None:
+    secret = settings.telegram_webhook_secret
+    if not secret.strip() and settings.environment != "production":
+        return
+
+    if not secret.strip() or secret_header is None or not compare_digest(secret.encode(), secret_header.encode()):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+@router.post(
+    "/webhook",
+    summary="Telegram bot webhook",
+    dependencies=[Depends(verify_telegram_webhook_secret)],
+)
 def telegram_webhook(update: dict[str, Any], db: Session = Depends(get_db)):
     ensure_telegram_configured()
 

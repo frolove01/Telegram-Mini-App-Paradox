@@ -50,76 +50,83 @@ For Telegram production, both frontend and backend must use public HTTPS URLs.
 
 ## Render Deploy
 
-The repository includes `render.yaml` for Render Blueprint deploy:
+Push the branch containing `render.yaml` once to `Telegram-Mini-App-Paradox`
+(remote `paradox` in this working copy). In the Render Dashboard, choose
+**New → Blueprint**, select that repository and branch, and review the
+three resources before deploying.
+[Render Blueprint setup](https://render.com/docs/infrastructure-as-code)
 
-```text
-Postgres: trader-mini-db
-Backend:  trader-mini-backend
-Frontend: trader-mini-frontend
+| Resource | Type |
+| --- | --- |
+| `paradox-backend` | Python Web Service |
+| `paradox-frontend` | Static Site (Node.js 24.22.1 for the build) |
+| `paradox-db` | PostgreSQL |
+
+### Base deployment
+
+1. Enter `TELEGRAM_BOT_TOKEN` for the Paradox bot and a separate
+   `TELEGRAM_WEBHOOK_SECRET` when Render prompts for them, or set both in
+   `paradox-backend` → **Environment**. Generate the webhook secret with
+   `openssl rand -hex 32` and keep the same value for webhook registration.
+   Render supplies `DATABASE_URL` from `paradox-db` and sets
+   `ENVIRONMENT=production` through the Blueprint. Keep real credentials in
+   Render or an ignored local `.env` file.
+2. Copy the actual HTTPS URLs shown by Render and set the following variables
+   under **Environment** for each service. Use the base URLs without a
+   trailing slash.
+
+   | Service | Variable | Value |
+   | --- | --- | --- |
+   | `paradox-backend` | `CORS_ORIGINS` | Public HTTPS URL of `paradox-frontend` |
+   | `paradox-backend` | `TELEGRAM_WEBAPP_URL` | Public HTTPS URL of `paradox-frontend` |
+   | `paradox-frontend` | `VITE_API_BASE_URL` | Public HTTPS URL of `paradox-backend` |
+
+3. Apply the backend variables with **Save and deploy**. For the frontend use
+   **Save, rebuild, and deploy**. Vite embeds `VITE_API_BASE_URL` at build time,
+   so every change to that variable requires a new frontend build. Confirm the
+   frontend loads and the backend's `/health/` returns `{"status":"ok"}`.
+   [Render environment variables](https://render.com/docs/configure-environment-variables)
+
+### Register and verify the Telegram webhook
+
+In the terminal, use the Paradox bot token and the same webhook secret you set
+on `paradox-backend`. The example uses Bash to read both without echoing them
+or putting their values in shell history. Replace the example URL with the
+backend's public HTTPS URL. [Telegram setWebhook](https://core.telegram.org/bots/api#setwebhook)
+
+```bash
+bash <<'BASH'
+set -eu
+backend_url='https://your-paradox-backend.onrender.com'
+read -rsp 'Paradox bot token: ' bot_token </dev/tty
+printf '\n'
+read -rsp 'Webhook secret from Render: ' webhook_secret </dev/tty
+printf '\n'
+curl --fail-with-body --silent --show-error \
+  --data-urlencode "url=${backend_url}/api/v1/telegram/webhook" \
+  --data-urlencode "secret_token=${webhook_secret}" \
+  "https://api.telegram.org/bot${bot_token}/setWebhook"
+printf '\n'
+BASH
 ```
 
-After deployment, verify the generated Render domains. If Render changes service
-domains, update:
+Check that Telegram returns `"ok":true`. Send `/start` in a private chat with
+the Paradox bot and confirm it sends the first funnel message. Use an account
+with funnel access, or the optional test access code below, to open the Mini App
+from the bot. Change a setting and reopen the app to verify it was saved.
 
-```text
-Backend CORS_ORIGINS
-Frontend VITE_API_BASE_URL
-```
+### Optional integrations
 
-Telegram settings endpoints use Telegram Mini App `initData` validation. Set
-`TELEGRAM_BOT_TOKEN` on the backend service in Render; without it,
-`/api/v1/me/settings` is disabled.
+Set these on `paradox-backend` only when you need the corresponding feature.
+Any optional fields shown during Blueprint setup can be configured later under
+**Environment**.
 
-The Telegram funnel is enabled for all users by default. For the funnel and Devsbite prototype, also set:
-
-```text
-TELEGRAM_FUNNEL_TEST_ACCESS_CODE=<private bypass code word>
-DEVSBITE_CLIENT_TOKEN=<Devsbite client token>
-```
-
-Admins can test Devsbite analysis in the bot with:
-
-```text
-pairs forex
-pairs otc
-pairs forex 80
-pairs commodities
-pairs stocks
-pairs crypto
-quote EUR/USD
-quote AED/CNY OTC
-quote commodities Gold OTC 60
-signal EUR/USD 3
-EUR/USD 3
-```
-
-The Mini App stores:
-
-```text
-market: FOREX / OTC
-language: ru / en / es / pt / tr / ar
-```
-
-To make `/start` send format buttons, including the Mini App button, set these
-backend env vars:
-
-```text
-TELEGRAM_BOT_TOKEN=<token from BotFather>
-TELEGRAM_WEBAPP_URL=https://trader-mini-frontend.onrender.com
-```
-
-Then register the webhook once:
-
-```text
-https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://trader-mini-backend.onrender.com/api/v1/telegram/webhook
-```
-
-Production examples:
-
-```text
-backend/.env.production.example
-frontend/.env.production.example
-.env.example
-```
-
-Do not commit real production secrets.
+| Variables | Feature |
+| --- | --- |
+| `POCKET_OPTION_PARTNER_ID`, `POCKET_OPTION_API_TOKEN` | Pocket Option trader and deposit verification. The Blueprint supplies the API base URL. |
+| `POCKET_OPTION_REF_RU_URL`, `POCKET_OPTION_REF_WW_URL` | Pocket Option registration links in the funnel. |
+| `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` | Private code for testing Mini App access without a real deposit. Send it in the bot chat after `/start`. |
+| `TELEGRAM_SOURCE_CHANNEL_ID` | Source channel for copied funnel messages. |
+| `TEAM_VIP_URL` | VIP team invite link. |
+| `TELEGRAM_ADMIN_USER_IDS` | Admin-only bot commands. |
+| `DEVSBITE_CLIENT_TOKEN` | Devsbite market data and analysis. The Blueprint supplies the API base URL. |

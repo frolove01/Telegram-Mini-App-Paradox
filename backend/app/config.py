@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     environment: str = "development"
     telegram_bot_token: str = ""
+    telegram_webhook_secret: str = ""
     telegram_webapp_url: str = ""
     telegram_admin_user_ids: str = ""
     telegram_funnel_test_access_code: str = ""
