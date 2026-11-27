@@ -197,7 +197,7 @@ function getDirectionForAsset(pair: string): SignalDirection {
 export function App() {
   const { t, i18n } = useTranslation();
   const [market, setMarket] = useState<MarketType>(() => readLocalMarket());
-  const [isDemoMode, setDemoMode] = useState(false);
+  const [hasPublicAccess, setPublicAccess] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>(() => readLocalLanguage());
   const [screen, setScreen] = useState<"start" | "dashboard">("start");
   const [isLanguageOpen, setLanguageOpen] = useState(false);
@@ -262,7 +262,7 @@ export function App() {
         const settings = await fetchUserSettings(controller.signal);
         if (!settings) return;
 
-        setDemoMode(settings.paradox_demo_mode === true);
+        setPublicAccess(settings.paradox_demo_mode === true);
         setMarket(normalizeMarket(settings.market));
         const hasCurrentManualPreference =
           localStorage.getItem(localStorageKeys.languageManual) === "1" &&
@@ -374,7 +374,7 @@ export function App() {
   }
 
   const languageLabel = t(`languages.${normalizeLanguage(language)}`);
-  const isForexSelectionClosed = !isDemoMode && market === "FOREX" && isForexClosed;
+  const isForexSelectionClosed = !hasPublicAccess && market === "FOREX" && isForexClosed;
   const isMarketMissing = !market;
   const isPairMissing = !tradingPair;
   const isModelMissing = !model;
@@ -704,11 +704,7 @@ export function App() {
               onClick={handleGenerateSignal}
             >
               <Zap size={18} />
-              <span>
-                {signalStatus === "generating"
-                  ? t(isDemoMode ? "demo.processing" : "dashboard.generating")
-                  : t(isDemoMode ? "demo.generate" : "dashboard.getSignal")}
-              </span>
+              <span>{signalStatus === "generating" ? t("dashboard.generating") : t("dashboard.getSignal")}</span>
             </button>
           </div>
 
@@ -727,9 +723,9 @@ export function App() {
                 <span className="radar-ring second" />
                 <span className="radar-ring third" />
                 <strong>{analysisProgress}%</strong>
-                <small>{isDemoMode ? t("demo.processing") : analysisStages[analysisStageIndex]}</small>
+                <small>{analysisStages[analysisStageIndex]}</small>
               </div>
-              <p>{isDemoMode ? t("demo.description") : <>{t("signal.analysisLine1")}<br />{t("signal.analysisLine2")}</>}</p>
+              <p>{t("signal.analysisLine1")}<br />{t("signal.analysisLine2")}</p>
               <div className="analysis-bars" aria-hidden="true">
                 {analysisStages.map((stage, index) => (
                   <span className={index <= analysisStageIndex ? "active" : ""} key={stage} />
@@ -743,9 +739,8 @@ export function App() {
             <div className={signalResult.direction === "CALL" ? "result-panel call" : "result-panel put"}>
               <div className="result-heading">
                 <Check size={18} />
-                <strong>{t(isDemoMode ? "demo.result" : "signal.ready")}</strong>
+                <strong>{t("signal.ready")}</strong>
               </div>
-              {isDemoMode && <p>{t("demo.description")}</p>}
               <div className="result-detail-grid">
                 <div>
                   <span>{t("signal.pair")}</span>
@@ -796,8 +791,8 @@ export function App() {
                   </span>
                   <small>TradingView</small>
                 </div>
-                <p>{t(isDemoMode ? "demo.chartUnavailable" : "signal.chartNote")}</p>
-                {!isDemoMode && <TradingViewWidget pair={tradingPair} language={resolveLanguage(language)} />}
+                <p>{t("signal.chartNote")}</p>
+                <TradingViewWidget pair={tradingPair} language={resolveLanguage(language)} />
               </section>
             )}
             </>
@@ -847,7 +842,7 @@ export function App() {
 
         <div className="choice-panel">
           <h1>{t("intro.cardTitle")}</h1>
-          <p>{t(isDemoMode ? "demo.description" : "intro.subtitle")}</p>
+          <p>{t("intro.subtitle")}</p>
 
           <div className="market-options" aria-label={t("intro.marketTitle")}>
             <button

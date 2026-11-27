@@ -1572,12 +1572,12 @@ def verify_telegram_webhook_secret(
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-def send_demo_welcome(chat_id: int, language_code: str | None) -> None:
+def send_public_welcome(chat_id: int, language_code: str | None) -> None:
     if normalize_funnel_language(language_code) == "ru":
-        text = "Добро пожаловать в демоверсию Paradox! Откройте приложение, чтобы посмотреть, как оно работает."
+        text = "Добро пожаловать в Paradox!"
         button = "Открыть Paradox"
     else:
-        text = "Welcome to the Paradox demo! Open the app to see how it works."
+        text = "Welcome to Paradox!"
         button = "Open Paradox"
 
     with httpx.Client(timeout=10) as client:
@@ -1627,7 +1627,7 @@ def telegram_webhook(update: dict[str, Any], db: Session = Depends(get_db)):
 
     if settings.paradox_demo_mode:
         if chat.get("type") == "private" and text and re.match(r"^/start(?:@\w+)?(?:\s|$)", text):
-            send_demo_welcome(chat_id, user.get("language_code"))
+            send_public_welcome(chat_id, user.get("language_code"))
         return {"ok": True}
 
     saved_route, saved_language = get_saved_context(db, user)
