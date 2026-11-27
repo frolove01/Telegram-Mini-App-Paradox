@@ -1,157 +1,97 @@
-# Paradox FX Mini App
+# Paradox — мини-приложение в Telegram
 
-MVP Telegram Mini App interface for Paradox FX. The first stage includes only
-the Mini App flow and UI: format selection in Telegram, market selection,
-language selection, and a placeholder signal workspace. Broker connections,
-trading servers, parsers, and real signal generation are out of scope for this
-stage.
+Я делал Paradox с нуля по запросу заказчика для пользователей, которые работают с валютными парами на Forex. Задача продукта — дать им возможность начать работу из чата Telegram, выбрать параметры сигнала и посмотреть график валютной пары в одном приложении. Для портфолио я развернул отдельную публичную версию. Часть её сценариев отличается от клиентской.
 
-## Local Docker Run
+[Открыть публичную версию в Telegram — @paradoxfbot](https://t.me/paradoxfbot). Нажмите **Start**, затем **«Открыть Paradox»** под сообщением бота. В приложении можно выбрать язык, валютную пару Forex, модель и срок действия сигнала. Приложение формирует карточку сигнала во фронтенде и показывает график TradingView. OTC в публичной версии недоступен.
+
+## Что я сделал
+
+Я отвечал за продукт. Собирал и уточнял требования заказчика, анализировал конкурентов и писал ТЗ. Описал пользовательский путь, спроектировал экраны и реализовал фронтенд. Серверную часть реализовал разработчик. Я описывал для него сценарии, правила доступа и ожидаемые ответы бота.
+
+### Как я спроектировал вход через Telegram
+
+Пользователю нужно было понять, какой шаг выполнить в чате и когда уже можно открыть приложение. В ТЗ я связал каждый шаг пользователя с ответом бота.
+
+1. Пользователь нажимает **Start** и получает следующий шаг в чате. В клиентском сценарии бот направляет его к регистрации, запрашивает ID трейдера и проверяет пополнение.
+2. Я описал, когда показать кнопку приложения. Если проверка проходит, кнопка становится доступна. Если ID не найден или пополнение ещё не подтверждено, бот объясняет, что делать дальше.
+3. После открытия приложения я спроектировал и реализовал экран выбора языка и форму сигнала. Пользователь сначала задаёт валютную пару, модель и срок действия, затем видит результат рядом с графиком выбранной пары.
+
+Для публичной версии я описал сокращённый вход. Бот показывает кнопку сразу после **Start**. Регистрация у брокера, ID трейдера и пополнение для этого не нужны. Так можно посмотреть сам интерфейс, не проходя клиентский сценарий доступа.
+
+## Стек
+
+- **Фронтенд, который я реализовал.** React, TypeScript, CSS и Vite. Интерфейс открывается в Telegram Mini App, переводы подключены через i18next, график — через виджет TradingView.
+- **Серверная часть, для которой я писал требования.** Telegram Bot API, Python, FastAPI и PostgreSQL. Локальный запуск описан через Docker Compose, публичная версия развёрнута на Render.
+
+## Локальный запуск
+
+Выполните команду из корня проекта.
 
 ```bash
 docker compose up --build
 ```
 
-Services:
-
-```text
-frontend  http://localhost:5173
-backend   http://localhost:8000
-postgres  localhost:5432
-```
-
-Health check:
-
-```text
-http://localhost:8000/health/
-```
-
-## Environment
-
-Backend:
-
-```text
-DATABASE_URL=postgresql+psycopg://trader:trader@postgres:5432/trader_mini
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-TELEGRAM_BOT_TOKEN=<token from BotFather>
-TELEGRAM_WEBAPP_URL=http://localhost:5173
-TELEGRAM_FUNNEL_TEST_ACCESS_CODE=<private bypass code word>
-DEVSBITE_CLIENT_TOKEN=<client token>
-DEVSBITE_API_BASE_URL=https://api.devsbite.com
-```
-
-Frontend build argument:
-
-```text
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-For Telegram production, both frontend and backend must use public HTTPS URLs.
-
-## Render Deploy
-
-Push the branch containing `render.yaml` once to `Telegram-Mini-App-Paradox`
-(remote `paradox` in this working copy). In the Render Dashboard, choose
-**New → Blueprint**, select that repository and branch, and review the
-three resources before deploying.
-[Render Blueprint setup](https://render.com/docs/infrastructure-as-code)
-
-| Resource | Type |
+| Что открыть | Адрес |
 | --- | --- |
-| `paradox-backend` | Python Web Service |
-| `paradox-frontend` | Static Site (Node.js 24.22.1 for the build) |
-| `paradox-db` | PostgreSQL |
+| Интерфейс | `http://localhost:5173` |
+| Проверка бэкенда | `http://localhost:8000/health/` |
+| PostgreSQL | `localhost:5432` |
 
-### Base deployment
+Примеры переменных есть в `.env.example` и `backend/.env.example`. Реальные токены и секреты храните в локальном `.env`, который игнорируется Git, или в настройках Render. Для запуска внутри Telegram нужны публичные HTTPS-адреса.
 
-1. Enter `TELEGRAM_BOT_TOKEN` for the Paradox bot and a separate
-   `TELEGRAM_WEBHOOK_SECRET` when Render prompts for them, or set both in
-   `paradox-backend` → **Environment**. Generate the webhook secret with
-   `openssl rand -hex 32` and keep the same value for webhook registration.
-   Render supplies `DATABASE_URL` from `paradox-db` and sets
-   `ENVIRONMENT=production` through the Blueprint. Keep real credentials in
-   Render or an ignored local `.env` file.
-2. Copy the actual HTTPS URLs shown by Render and set the following variables
-   under **Environment** for each service. Use the base URLs without a
-   trailing slash.
+## Деплой на Render
 
-   | Service | Variable | Value |
+В Render откройте **New → Blueprint**, выберите репозиторий `Telegram-Mini-App-Paradox` и ветку с файлом `render.yaml`. Blueprint создаёт бэкенд `paradox-backend`, статический фронтенд `paradox-frontend` и базу `paradox-db`. [Как создать Blueprint](https://render.com/docs/infrastructure-as-code)
+
+1. В **Environment** бэкенда задайте `TELEGRAM_BOT_TOKEN` и отдельный `TELEGRAM_WEBHOOK_SECRET`. Секрет можно сгенерировать командой `openssl rand -hex 32`. Blueprint сам передаёт бэкенду `DATABASE_URL` и устанавливает `ENVIRONMENT=production`.
+2. Скопируйте выданные Render HTTPS-адреса без завершающего слеша и задайте переменные из таблицы.
+
+   | Сервис | Переменная | Значение |
    | --- | --- | --- |
-   | `paradox-backend` | `CORS_ORIGINS` | Public HTTPS URL of `paradox-frontend` |
-   | `paradox-backend` | `TELEGRAM_WEBAPP_URL` | Public HTTPS URL of `paradox-frontend` |
-   | `paradox-frontend` | `VITE_API_BASE_URL` | Public HTTPS URL of `paradox-backend` |
+   | `paradox-backend` | `CORS_ORIGINS` | HTTPS-адрес фронтенда |
+   | `paradox-backend` | `TELEGRAM_WEBAPP_URL` | HTTPS-адрес фронтенда |
+   | `paradox-frontend` | `VITE_API_BASE_URL` | HTTPS-адрес бэкенда |
 
-3. Apply the backend variables with **Save and deploy**. For the frontend use
-   **Save, rebuild, and deploy**. Vite embeds `VITE_API_BASE_URL` at build time,
-   so every change to that variable requires a new frontend build. Confirm the
-   frontend loads and the backend's `/health/` returns `{"status":"ok"}`.
-   [Render environment variables](https://render.com/docs/configure-environment-variables)
+3. Для бэкенда нажмите **Save and deploy**. Для фронтенда выберите **Save, rebuild, and deploy**. Vite подставляет `VITE_API_BASE_URL` при сборке. После деплоя проверьте, что фронтенд открывается, а бэкенд возвращает `{"status":"ok"}` на `/health/`. [Как задать переменные в Render](https://render.com/docs/configure-environment-variables)
 
-### Register and verify the Telegram webhook
+### Вебхук Telegram
 
-In the terminal, use the Paradox bot token and the same webhook secret you set
-on `paradox-backend`. The example uses Bash to read both without echoing them
-or putting their values in shell history. Replace the example URL with the
-backend's public HTTPS URL. [Telegram setWebhook](https://core.telegram.org/bots/api#setwebhook)
+Зарегистрируйте вебхук бота на `/api/v1/telegram/webhook`. В команде замените пример адреса на HTTPS-адрес бэкенда и введите токен нужного бота. Секрет должен совпадать с `TELEGRAM_WEBHOOK_SECRET` в Render. Ввод обоих значений скрыт. [Документация Telegram по setWebhook](https://core.telegram.org/bots/api#setwebhook)
 
 ```bash
 bash <<'BASH'
 set -eu
 backend_url='https://your-paradox-backend.onrender.com'
-read -rsp 'Paradox bot token: ' bot_token </dev/tty
+read -rsp 'Токен бота: ' bot_token </dev/tty
 printf '\n'
-read -rsp 'Webhook secret from Render: ' webhook_secret </dev/tty
+read -rsp 'Секрет вебхука из Render: ' webhook_secret </dev/tty
 printf '\n'
-curl --fail-with-body --silent --show-error \
-  --data-urlencode "url=${backend_url}/api/v1/telegram/webhook" \
-  --data-urlencode "secret_token=${webhook_secret}" \
-  "https://api.telegram.org/bot${bot_token}/setWebhook"
+curl --fail-with-body --silent --show-error --config - <<CURL
+url = "https://api.telegram.org/bot${bot_token}/setWebhook"
+data-urlencode = "url=${backend_url}/api/v1/telegram/webhook"
+data-urlencode = "secret_token=${webhook_secret}"
+CURL
 printf '\n'
 BASH
 ```
 
-Check that Telegram returns `"ok":true`.
+Telegram должен вернуть `"ok":true`.
 
-### Public access
+### Как включить публичный вход
 
-In Render, open `paradox-backend` → **Environment**, add
-`PARADOX_DEMO_MODE=true`, and choose **Save and deploy**. The access setting takes
-effect after the backend deploy and requires no frontend rebuild. Use
-`PARADOX_DEMO_MODE=false` or remove the variable and redeploy to restore the
-standard funnel. The mode is off by default. Existing funnel state is preserved
-and scheduled funnel reminders pause while public access is on.
+В **Environment** сервиса `paradox-backend` задайте `PARADOX_DEMO_MODE=true` и нажмите **Save and deploy**. Оставьте `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` пустой. Ключи Pocket Option и Devsbite для публичного входа не нужны. Значение `false` или удаление переменной возвращает клиентский сценарий после деплоя бэкенда.
 
-Public access uses the base deployment variables above, including both Telegram
-secrets, the three HTTPS URL settings, and the database connection supplied by
-the Blueprint. Leave `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` empty. Pocket Option,
-Devsbite, and VIP settings are optional and can stay empty.
+После деплоя найдите бота по имени с другого аккаунта Telegram, нажмите **Start** и откройте Mini App из нового сообщения. Выберите язык, валютную пару и параметры сигнала, затем проверьте график. Закройте приложение и откройте его снова, чтобы проверить сохранение языка.
 
-After deploying, test with a different Telegram account that has never used
-the Paradox bot.
+### Подключения для клиентского сценария
 
-1. Find the bot by its exact `@username`, open the private chat, and tap
-   **Start**.
-2. Tap **Open Paradox** (or **Открыть Paradox**). Confirm the Mini App opens
-   directly. Tap **Continue**, generate a Forex signal, and check the TradingView chart.
-3. Change the app language, close the Mini App, and reopen it from the bot
-   to verify the saved language. Send `/start` again to check that it still
-   sends the app button.
+Добавляйте эти переменные в **Environment** бэкенда, когда используете соответствующий сценарий.
 
-With public access off, `/start` sends the normal funnel welcome and opening the
-Mini App from that flow requires the existing funnel access.
-
-### Optional integrations
-
-Set these on `paradox-backend` only when you need the corresponding feature.
-Any optional fields shown during Blueprint setup can be configured later under
-**Environment**.
-
-| Variables | Feature |
+| Переменные | Для чего нужны |
 | --- | --- |
-| `POCKET_OPTION_PARTNER_ID`, `POCKET_OPTION_API_TOKEN` | Pocket Option trader and deposit verification. The Blueprint supplies the API base URL. |
-| `POCKET_OPTION_REF_RU_URL`, `POCKET_OPTION_REF_WW_URL` | Pocket Option registration links in the funnel. |
-| `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` | Private code for testing Mini App access without a real deposit. Send it in the bot chat after `/start`. |
-| `TELEGRAM_SOURCE_CHANNEL_ID` | Source channel for copied funnel messages. |
-| `TEAM_VIP_URL` | VIP team invite link. |
-| `TELEGRAM_ADMIN_USER_IDS` | Admin-only bot commands. |
-| `DEVSBITE_CLIENT_TOKEN` | Devsbite market data and analysis. The Blueprint supplies the API base URL. |
+| `POCKET_OPTION_PARTNER_ID`, `POCKET_OPTION_API_TOKEN` | Проверка ID трейдера и пополнения |
+| `POCKET_OPTION_REF_RU_URL`, `POCKET_OPTION_REF_WW_URL` | Ссылки на регистрацию у брокера |
+| `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` | Одно тестовое слово для проверки доступа через клиентскую воронку |
+| `TELEGRAM_SOURCE_CHANNEL_ID`, `TEAM_VIP_URL` | Канал для копирования сообщений и ссылка на закрытую команду |
+| `TELEGRAM_ADMIN_USER_IDS` | Доступ к админским командам |
+| `DEVSBITE_CLIENT_TOKEN` | Подключение рыночных данных к серверным сценариям |
