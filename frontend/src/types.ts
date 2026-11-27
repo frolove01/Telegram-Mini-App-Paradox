@@ -16,4 +16,5 @@ export type UserSettings = {
   language: AppLanguage;
   market: MarketType;
   funnel_route: FunnelRoute;
+  paradox_demo_mode: boolean;
 };

@@ -879,6 +879,10 @@ def funnel_ref_keyboard(language: str, *, include_existing_account: bool = True)
     return {"inline_keyboard": keyboard} if keyboard else None
 
 
+def mini_app_keyboard(label: str) -> dict[str, Any]:
+    return {"inline_keyboard": [[{"text": label, "web_app": {"url": settings.telegram_webapp_url}}]]}
+
+
 def funnel_node_keyboard(node_code: str, language: str) -> dict[str, Any] | None:
     texts = funnel_texts(language)
 
@@ -898,13 +902,13 @@ def funnel_node_keyboard(node_code: str, language: str) -> dict[str, Any] | None
         return {"inline_keyboard": [[{"text": texts["check_topup"], "callback_data": "funnel:check_topup"}]]}
 
     if node_code == "BOT-SUCCESS":
-        return {"inline_keyboard": [[{"text": texts["open_bot"], "web_app": {"url": settings.telegram_webapp_url}}]]}
+        return mini_app_keyboard(texts["open_bot"])
 
     if node_code == "TEAM-SUCCESS":
-        keyboard = [[{"text": texts["open_bot"], "web_app": {"url": settings.telegram_webapp_url}}]]
+        reply_markup = mini_app_keyboard(texts["open_bot"])
         if settings.team_vip_url:
-            keyboard.append([{"text": texts["join_team"], "url": settings.team_vip_url}])
-        return {"inline_keyboard": keyboard}
+            reply_markup["inline_keyboard"].append([{"text": texts["join_team"], "url": settings.team_vip_url}])
+        return reply_markup
 
     if node_code == "REMINDER-03":
         return {"inline_keyboard": [[{"text": texts["continue_registration"], "callback_data": "funnel:continue_topup_not_found"}]]}

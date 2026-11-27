@@ -110,6 +110,7 @@ class UserSettingsRead(BaseModel):
     market: str
     funnel_route: str
     funnel_access_granted: bool
+    paradox_demo_mode: bool
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

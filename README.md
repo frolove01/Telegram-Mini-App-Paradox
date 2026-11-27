@@ -110,10 +110,37 @@ printf '\n'
 BASH
 ```
 
-Check that Telegram returns `"ok":true`. Send `/start` in a private chat with
-the Paradox bot and confirm it sends the first funnel message. Use an account
-with funnel access, or the optional test access code below, to open the Mini App
-from the bot. Change a setting and reopen the app to verify it was saved.
+Check that Telegram returns `"ok":true`.
+
+### Public demo
+
+In Render, open `paradox-backend` → **Environment**, add
+`PARADOX_DEMO_MODE=true`, and choose **Save and deploy**. The demo setting takes
+effect after the backend deploy and requires no frontend rebuild. Use
+`PARADOX_DEMO_MODE=false` or remove the variable and redeploy to restore the
+standard funnel. The mode is off by default. Existing funnel state is preserved
+and scheduled funnel reminders pause while the demo is on.
+
+The demo uses the base deployment variables above, including both Telegram
+secrets, the three HTTPS URL settings, and the database connection supplied by
+the Blueprint. Leave `TELEGRAM_FUNNEL_TEST_ACCESS_CODE` empty. Pocket Option,
+Devsbite, and VIP settings are optional and can stay empty. The signal screen
+uses clearly marked examples and shows that the live chart is unavailable in
+demo mode.
+
+After deploying, test with a different Telegram account that has never used
+the Paradox bot.
+
+1. Find the bot by its exact `@username`, open the private chat, and tap
+   **Start**.
+2. Tap **Open Paradox** (or **Открыть Paradox**). Confirm the Mini App opens
+   directly. Tap **Continue** and try the example signal screen.
+3. Change the app language, close the Mini App, and reopen it from the bot
+   to verify the saved language. Send `/start` again to check that it still
+   sends the demo button.
+
+With demo mode off, `/start` sends the normal funnel welcome and opening the
+Mini App from that flow requires the existing funnel access.
 
 ### Optional integrations
 

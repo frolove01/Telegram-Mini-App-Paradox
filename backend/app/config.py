@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_webhook_secret: str = ""
     telegram_webapp_url: str = ""
+    paradox_demo_mode: bool = False
     telegram_admin_user_ids: str = ""
     telegram_funnel_test_access_code: str = ""
     telegram_source_channel_id: str = ""

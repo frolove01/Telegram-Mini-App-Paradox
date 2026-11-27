@@ -15,6 +15,13 @@ const signalBase = {
 const resources = {
   en: {
     translation: {
+      demo: {
+        description: "Explore the demo with simulated data. Results are examples, with no market forecast.",
+        generate: "Show example",
+        processing: "Preparing example",
+        result: "Example signal",
+        chartUnavailable: "The live chart is unavailable in demo mode."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "Paradox trading system",
@@ -79,6 +86,13 @@ const resources = {
   },
   ru: {
     translation: {
+      demo: {
+        description: "Посмотрите, как работает демо. Результаты сгенерированы для примера и не являются прогнозом.",
+        generate: "Показать пример",
+        processing: "Подготовка примера",
+        result: "Пример сигнала",
+        chartUnavailable: "Живой график недоступен в деморежиме."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "Торговая система Paradox",
@@ -149,6 +163,13 @@ const resources = {
   },
   es: {
     translation: {
+      demo: {
+        description: "Explora la demo con datos simulados. Los resultados son ejemplos sin pronóstico de mercado.",
+        generate: "Mostrar ejemplo",
+        processing: "Preparando el ejemplo",
+        result: "Ejemplo de señal",
+        chartUnavailable: "El gráfico en directo no está disponible en la demo."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "Sistema de trading Paradox",
@@ -213,6 +234,13 @@ const resources = {
   },
   pt: {
     translation: {
+      demo: {
+        description: "Explore a demonstração com dados simulados. Os resultados são exemplos sem previsão de mercado.",
+        generate: "Mostrar exemplo",
+        processing: "Preparando o exemplo",
+        result: "Exemplo de sinal",
+        chartUnavailable: "O gráfico ao vivo está indisponível no modo de demonstração."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "Sistema de trading Paradox",
@@ -277,6 +305,13 @@ const resources = {
   },
   tr: {
     translation: {
+      demo: {
+        description: "Demoyu simüle edilmiş verilerle keşfedin. Sonuçlar yalnızca örnektir ve piyasa tahmini içermez.",
+        generate: "Örneği göster",
+        processing: "Örnek hazırlanıyor",
+        result: "Örnek sinyal",
+        chartUnavailable: "Canlı grafik demo modunda kullanılamaz."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "Paradox trading sistemi",
@@ -341,6 +376,13 @@ const resources = {
   },
   ar: {
     translation: {
+      demo: {
+        description: "استكشف النسخة التجريبية ببيانات محاكاة. النتائج أمثلة توضيحية ولا تتضمن توقعات للسوق.",
+        generate: "عرض مثال",
+        processing: "جارٍ إعداد المثال",
+        result: "مثال على الإشارة",
+        chartUnavailable: "الرسم البياني المباشر غير متاح في الوضع التجريبي."
+      },
       intro: {
         eyebrow: "Trading Bot",
         cardTitle: "نظام تداول Paradox",

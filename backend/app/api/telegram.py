@@ -58,6 +58,7 @@ from app.telegram.templates import (
     bot_reminder_keyboard,
     funnel_node_keyboard,
     funnel_texts,
+    mini_app_keyboard,
     normalize_funnel_language,
     normalize_language,
     parse_start_context,
@@ -730,6 +731,9 @@ def run_funnel_reminder_worker() -> None:
 
 def start_funnel_reminder_worker() -> None:
     global _reminder_worker_started
+
+    if settings.paradox_demo_mode:
+        return
 
     with _reminder_worker_lock:
         if _reminder_worker_started:
@@ -1568,6 +1572,18 @@ def verify_telegram_webhook_secret(
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
+def send_demo_welcome(chat_id: int, language_code: str | None) -> None:
+    if normalize_funnel_language(language_code) == "ru":
+        text = "Добро пожаловать в демоверсию Paradox! Откройте приложение, чтобы посмотреть, как оно работает."
+        button = "Открыть Paradox"
+    else:
+        text = "Welcome to the Paradox demo! Open the app to see how it works."
+        button = "Open Paradox"
+
+    with httpx.Client(timeout=10) as client:
+        send_message(client, chat_id, text, reply_markup=mini_app_keyboard(button)).raise_for_status()
+
+
 @router.post(
     "/webhook",
     summary="Telegram bot webhook",
@@ -1581,6 +1597,11 @@ def telegram_webhook(update: dict[str, Any], db: Session = Depends(get_db)):
         callback_data = callback_query.get("data")
         if callback_data and callback_data.startswith("admin_signal:"):
             handle_admin_callback_query(db, callback_query)
+            return {"ok": True}
+        if settings.paradox_demo_mode:
+            if callback_id := callback_query.get("id"):
+                with httpx.Client(timeout=10) as client:
+                    answer_callback_query(client, callback_id, "").raise_for_status()
             return {"ok": True}
         if callback_data == "text_format":
             handle_callback_query(callback_query, db)
@@ -1602,6 +1623,11 @@ def telegram_webhook(update: dict[str, Any], db: Session = Depends(get_db)):
     db.commit()
 
     if text and handle_admin_command_message(db, user, chat_id, message, text):
+        return {"ok": True}
+
+    if settings.paradox_demo_mode:
+        if chat.get("type") == "private" and text and re.match(r"^/start(?:@\w+)?(?:\s|$)", text):
+            send_demo_welcome(chat_id, user.get("language_code"))
         return {"ok": True}
 
     saved_route, saved_language = get_saved_context(db, user)
@@ -1798,11 +1824,7 @@ def handle_callback_query(callback_query: dict[str, Any], db: Session) -> None:
             chat_id,
             legacy_text["message"],
             parse_mode="HTML",
-            reply_markup={
-                "inline_keyboard": [
-                    [{"text": legacy_text["open_mini_app"], "web_app": {"url": settings.telegram_webapp_url}}]
-                ]
-            },
+            reply_markup=mini_app_keyboard(legacy_text["open_mini_app"]),
         ).raise_for_status()
 
 

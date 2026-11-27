@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.config import settings as app_settings
 from app.database import get_db
 from app.models.funnel_session import FunnelSession
 from app.models.telegram_user import TelegramUser as TelegramUserModel
@@ -28,6 +29,7 @@ def serialize_settings(
         market=settings.market,
         funnel_route=funnel_session.route if funnel_session else "",
         funnel_access_granted=bool(funnel_session and funnel_session.access_granted),
+        paradox_demo_mode=app_settings.paradox_demo_mode,
         created_at=settings.created_at,
         updated_at=settings.updated_at,
     )
